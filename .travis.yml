@@ -1,0 +1,26 @@
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+sudo: false
+language: python
+python:
+- 2.7
+- 3.4
+- 3.5
+install:
+- pip install tox-travis
+- pip install coveralls
+deploy:
+  provider: pypi
+  user: javeedf
+  password: 
+    secure: "dHxVWHm5QbhH34DoLgQES30VnJMB6LX5wdK3mIYXFinPypiujI1a3TyRClAdc8/N52gxWQ4/iTBGYkpAUVmcs2mc64zreT9DzZHHlMhduRcnh6nR+y5lhFrbL9SMovNj4yUx1lVhu5EdairF5Jkv6/76wMpgIZUaVifGKCR31LhUlp1WWWWkqCuFB2/IFrP0HEY/57J83USG5L5Mx5tRKBYkY0MPr5JFz/xkNr34Dng8aw4KeekxOpwliBU64bHNxhTQKGwXS/icJnMjuhIVISxKT3qwlW2gU2x3LJ6yZPBnTjWziX/t5QI3puMNgPpzIHR+0vXZPBXqoZwE2kqoiI1u6CFeH1pRzuhA+u0y2SGB+Ag1SWkkQVd+RgeN01M/YxflX5OWnanShaDmAM+kwnielcRa5DBg0bJGvI1wJLraaBz7eIcjZ6DDdJ0iru2ka3lxfr3/QENTTdioVf+pxikJoOnm3m8IrCStfKFm8wmf2FHCSHAnwaASVG94IQdlLmYR/ktE22uVV9rPM4oDmNtuerzjW8JUupIBAbtyPDRWkfidykSWr0u/oEP7n4w6DGiBJk9HMNp+BlWBqI0drAiliUsDapb7ypUn7b1Giind/pE9yTjFLlXaQO5eNrfXwh1aK3JBAFmKBMM1UTwVSZ62aQeQW0gut/T/RI+2c94="
+  on:
+    tags: true
+    branch: master
+script:
+- tox
+after_success:
+- coveralls
+- if [ $TRAVIS_TAG ]; then curl -X POST https://readthedocs.org/build/napalm; fi
