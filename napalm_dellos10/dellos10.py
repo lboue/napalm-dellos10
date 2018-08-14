@@ -749,10 +749,16 @@ class DellOS10Driver(NetworkDriver):
         """
         # default values.
         output = self._send_command('show interface status | display-xml')
+        output_mgmt = self._send_command('show interface mgmt | display-xml')
+        output_po = self._send_command('show interface port-channel | display-xml')
+        
         interfaces_xml_data = self.convert_xml_data(output)
+        interfaces_mgmt_xml_data = self.convert_xml_data(output_mgmt)
+        interfaces_po_xml_data = self.convert_xml_data(output_po)
 
         interfaces_dict = {}
 
+        # ethernet if
         for interface in interfaces_xml_data.findall(
                 './data/interfaces/interface'):
             intf = dict()
@@ -769,6 +775,58 @@ class DellOS10Driver(NetworkDriver):
         for interface in interfaces_xml_data.findall(
                 './data/interfaces-state/interface'):
             name = self.parse_item(interface, 'name')
+            intf = interfaces_dict[name]
+            oper_status = self.parse_item(interface, 'oper-status')
+            intf['is_up'] = False if oper_status == "down" else True
+            speed_val = self.parse_item(interface, 'speed')
+            intf['speed'] = self.convert_int(speed_val)
+
+            interfaces_dict[name] = intf
+
+        # management if
+        for interface in interfaces_mgmt_xml_data.findall(
+                './data/interfaces/interface'):
+            intf = dict()
+            name = self.parse_item(interface, 'name')
+            intf['last_flapped'] = -1.0
+            intf['description'] = self.parse_item(interface, 'description')
+            admin_status = self.parse_item(interface, 'enabled')
+            intf['is_enabled'] = True if admin_status == "true" else False
+
+            intf['mac_address'] = self.UNKNOWN
+
+            interfaces_dict[name] = intf
+
+        for interface in interfaces_mgmt_xml_data.findall(
+                './data/interfaces-state/interface'):
+            name = self.parse_item(interface, 'name')
+            intf = interfaces_dict[name]
+            oper_status = self.parse_item(interface, 'oper-status')
+            intf['is_up'] = False if oper_status == "down" else True
+            speed_val = self.parse_item(interface, 'speed')
+            intf['speed'] = self.convert_int(speed_val)
+
+            interfaces_dict[name] = intf
+
+        # port-channel
+        for interface in interfaces_po_xml_data.findall(
+                './data/interfaces/interface'):
+            intf = dict()
+            name = self.parse_item(interface, 'name')
+            intf['last_flapped'] = -1.0
+            intf['description'] = self.parse_item(interface, 'description')
+            admin_status = self.parse_item(interface, 'enabled')
+            intf['is_enabled'] = True if admin_status == "true" else False
+
+            intf['mac_address'] = self.UNKNOWN
+
+            interfaces_dict[name] = intf
+
+        for interface in interfaces_po_xml_data.findall(
+                './data/interfaces-state/interface'):
+            name = self.parse_item(interface, 'name')
+            if name == 'port-channel1000':  # Workaroud for port-channel1000 hidden if but exist in the interfaces-state dict
+                continue           
             intf = interfaces_dict[name]
             oper_status = self.parse_item(interface, 'oper-status')
             intf['is_up'] = False if oper_status == "down" else True
